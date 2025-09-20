@@ -1,53 +1,70 @@
 from bs4 import BeautifulSoup
 from io import StringIO
+from dotenv import load_dotenv
 import os
 import requests
 import pandas as pd
 
-# Read env var
-url = os.environ.get('ETNOBOTANICA_NOMS_POPULARS_URL')
-if not url:
-    raise ValueError(f"URL {url} not found")
+load_dotenv()
 
-# Create output folder
+base_url = os.environ.get('ETNOBOTANICA_BASE_URL')
+start_path = os.environ.get('ETNOBOTANICA_NOMS_POPULARS_PATH')
+
+if not base_url or not start_path:
+    raise ValueError(f"URL {base_url} or {start_path} not found")
+
 os.makedirs('data', exist_ok=True)
 
-# Request
-response = requests.get(url)
-if response.status_code != 200:
-    raise Exception(f"Error fetching URL: {response.status_code}")
+all_rows = []
+next_url = base_url + start_path
 
-html_data = response.text
-print("HTML successfully obtained")
+    
+while next_url:
+    response = requests.get(next_url)
+    if response.status_code != 200:
+        print(f"Error {response.status_code}, stopping scraping")
+        break
 
-# Scrapping
-bs = BeautifulSoup(html_data, 'lxml')
+    html_data = response.text
+    bs = BeautifulSoup(html_data, 'lxml')
+    
+    table = bs.find('table')
+    
+    if not table:
+        print("Not table found, stopping.")
+        break
 
-table = bs.find('table')
-html_string = str(table)
+    df = pd.read_html(StringIO((str(table))))[0]
+    all_rows.append(df)
+    print(f"Scraping {next_url}")
 
-# Convert to DF
-df = pd.read_html(StringIO(html_string))[0]
+    next_link = bs.find('a', title="next")
+    if next_link and 'href' in next_link.attrs:
+        next_url = base_url + next_link['href']
+    else:
+        next_url = None
 
-families = df.iloc[:, 0]
-taxons = df.iloc[:, 1]
+if all_rows:
+    df = pd.concat(all_rows, ignore_index=True)
+    
+    families = df.iloc[:, 0]
+    taxons = df.iloc[:, 1]
 
-# Function to split values in a list
-def separar_noms(x):
-    if pd.isna(x):
-        return[]
-    return [v.strip() for v in x.split(',')]
+    # Function to split values in a list
+    def separar_noms(x):
+        if pd.isna(x):
+            return[]
+        return [v.strip() for v in x.split(',')]
 
-noms_populars = df.iloc[:, 2].apply(separar_noms) 
+    noms_populars = df.iloc[:, 2].apply(separar_noms) 
 
-# TODO: surpass pagination
+    df_final = pd.DataFrame({
+        'Familia': families,
+        'Tàxon' : taxons,
+        'Noms populars' : noms_populars
+    })
 
-# Final DF
-df_final = pd.DataFrame({
-    'Familia': families,
-    'Tàxon' : taxons,
-    'Noms populars' : noms_populars
-})
-
-# Export to CSV
-df_final.to_csv('data/noms_populars.csv', index=False, encoding='utf-8')
+    df_final.to_csv('data/noms_populars.csv', index=False, encoding='utf-8')
+    print("CSV saved")
+else:
+    print("No data collected")
