@@ -23,10 +23,10 @@ def get_noms_populars_df(save_csv=False):
     df = pd.concat(all_rows, ignore_index=True)
 
     df_final = pd.DataFrame({
-            'Familia': df.iloc[:, 0],
-            'Tàxon' : df.iloc[:, 1],
-            'Noms populars' : df.iloc[:, 2].apply(clean_list_column)
-        })
+        'Familia': df.iloc[:, 0],
+        'Tàxon' : df.iloc[:, 1],
+        'Noms populars' : df.iloc[:, 2].apply(clean_list_column)
+    })
     
     if save_csv:
         df_final.to_csv('data/noms_populars.csv', index=False, encoding='utf-8')
