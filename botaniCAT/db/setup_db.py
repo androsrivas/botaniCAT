@@ -23,5 +23,15 @@ with sqlite3.connect('data/botaniCAT.db') as conn:
     '''
     cursor.execute(create_noms_populars_table_query)
 
+    create_usos_medicinals_table_query = '''
+    CREATE TABLE IF NOT EXISTS Usos_medicinals (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        description TEXT NOT NULL,
+        plant_id INTEGER NOT NULL,
+        FOREIGN KEY (plant_id) REFERENCES Plants(id) ON DELETE CASCADE
+    );
+    '''
+    cursor.execute(create_usos_medicinals_table_query)
+
     conn.commit()
     print("Tables created successfully!")
