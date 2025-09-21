@@ -1,7 +1,7 @@
 import sqlite3
-from scraper.noms_populars import get_df_final
+from botaniCAT.scraper.noms_populars import get_noms_populars_df
 
-df_final = get_df_final(True)
+df_final = get_noms_populars_df(True)
 
 conn = sqlite3.connect('data/botaniCAT.db')
 cursor = conn.cursor()
