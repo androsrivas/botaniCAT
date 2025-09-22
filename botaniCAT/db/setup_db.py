@@ -8,10 +8,23 @@ with sqlite3.connect('data/botaniCAT.db') as conn:
     CREATE TABLE IF NOT EXISTS Plants (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         family TEXT NOT NULL,
-        taxon TEXT NOT NULL
+        taxon TEXT NOT NULL,
+        image_url TEXT,
+        image_public_id TEXT 
     );
     '''
     cursor.execute(create_plant_table_query)
+
+    create_plant_images_table_query = '''
+    CREATE TABLE IF NOT EXISTS Plant_images (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    plant_id INTEGER NOT NULL,
+    image_url TEXT NOT NULL,
+    image_public_id TEXT,
+    FOREIGN KEY (plant_id) REFERENCES Plants(id) ON DELETE CASCADE
+    );
+    '''
+    cursor.execute(create_plant_images_table_query)
 
     create_noms_populars_table_query = '''
     CREATE TABLE IF NOT EXISTS Noms_populars (
